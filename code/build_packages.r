@@ -18,27 +18,120 @@ library("magick"); library("magrittr")
 sizes <- c("300x250!","728x90!","160x600!","320x50!","300x600!","970x250!")
 
 # dir to vintage_bball package, containing images
-loc <- "../packages/vintage_bball/"
+loc <- "../../packages/vintage_bball/"
 files <- dir(loc)[endsWith(dir(loc), ".jpg")]
 
+
+
+black <- image_read("../../packages/2000px-Solid_black.svg.png")
+logo <- 
+  image_read("../../packages/spaceback/spaceback.png") 
+  # image_background("black",flatten=TRUE)
+
+info <- data.frame(
+  file=rep(files, times=length(sizes)),
+  in_size=rep(NA, times=length(file)),
+  out_size=rep(sizes, each=length(files))
+)
+
+
+# for each size y:
 for (y in seq_along(sizes)){
   size <- sizes[y]
+  # create dir if doesnt exist
   if (!file.exists(paste0(loc, gsub("!","",size)))){
     dir.create(paste0(loc, gsub("!","",size)))
   }
+  # get background color image of size y
+  back <- 
+    image_read("../../packages/2000px-Solid_black.svg.png") %>% 
+    image_scale(size) %>% 
+    image_convert("jpg") %>% 
+    image_border("#E67457","5x5") %>% 
+    image_scale(size) # rescale after border addition
+  #   for each file x: 
+  
   for (x in seq_along(files)){
-    img <-
-      paste0(loc, files[x]) %>%
-      image_read(paste0(loc,files[x])) %>%
-      image_scale(size) %>%
-      image_border("#E67457","5x5")
+    # read x
+    img <- image_read(paste0(loc,files[x])) 
     
+    dim_in <- c(
+      width=image_info(img)[["width"]],
+      height=image_info(img)[["height"]]
+    )
+    # aspect ratio of original image
+    ar_in <- as.numeric(dim_in["width"] / dim_in["height"])
+    
+    dim_out <- 
+      gsub("!","",sizes[y]) %>%
+      strsplit("x") %>%
+      (function(z) c(z[1],z[2])[[1]]) %>% 
+      as.integer() %>% 
+      (function(z) c(width=z[1], height=z[2]))
+    # aspect ratio of target image to create
+    ar_out <- as.numeric(dim_out["width"] / dim_out["height"])
+    
+    logo <- image_scale(logo, as.character(.5*dim_out["width"]))
+    
+    if (ar_in == ar_out){
+      img <- img %>% 
+        image_scale(size) %>%
+        image_border("#E67457","5x5")
+    } else 
+      if (ar_in < ar_out){ # pic narrower than out
+        img <- img %>% 
+          image_scale(paste0("x", dim_out["height"]-6)) %>% 
+          image_border("#E67457", "2x2") %>% 
+          (function(z){
+            image_composite(
+              back, z, 
+              offset=paste0("+", as.character(
+                .5*dim_out["width"] - .5*image_info(z)[["width"]]
+                ), "+1")
+              )
+          })
+        
+        # introduce logo to output image 
+        img <- 
+          image_composite(
+            img,logo, 
+            offset=paste0(
+              "+10", "+", dim_out["height"]-image_info(logo)[["height"]]-7
+            )
+          )
+        
+      } else 
+      if (ar_in > ar_out){ # pic wider than out
+      img <-
+        img %>% 
+        image_scale(as.character(dim_out["width"]-8)) %>% 
+        image_border("#E67457", "2x2") %>% 
+        image_scale(as.character(dim_out["width"]-8)) %>% 
+        (function(z){
+          image_composite(
+            back, z, 
+            offset=paste0("+4", "+", as.character(
+              .5*dim_out["height"] - .5*image_info(z)[["height"]]
+            ))
+          )
+        })
+      
+      # introduce logo to output image 
+      img <- 
+        image_composite(
+          img,logo, 
+          offset=paste0(
+            "+10", "+", dim_out["height"]-image_info(logo)[["height"]]-10
+          )
+        )
+    }
     # filename and location for output file
     saveloc <- paste0(
       loc, gsub("!","",size), "/rendered_", gsub("!","",size), "_", files[x]
     )
     # write output file
-    image_write(path=saveloc, image=img, quality=100, format="jpeg", flatten=TRUE)
+    image_write(path=saveloc, image=img, quality=100, 
+                format="jpg", flatten=TRUE)
     
     # print success message if saved; else print failure message
     if (file.exists(saveloc)){
@@ -48,48 +141,12 @@ for (y in seq_along(sizes)){
     }
     
   }
-  print(paste0("done processing size ", y, " of ", length(sizes)))
 }
 
 
 
-sapply(strsplit(gsub("!","",sizes), "x"), function(x)x[[1]])
+
+
 
 # === === === === === === === === === === === === === === === === === === 
 # === === === === === === === === === === === === === === === === === === 
-
-
-boosh <- image_read(paste0(loc,files[1]))
-
-image_info(boosh)[["width"]]
-image_info(boosh)[["height"]]
-
-black <- image_read("../packages/2000px-Solid_black.svg.png")
-
-# for each size y:
-#   create dir if doesnt exist
-#   
-#   for each file x: 
-#     read x
-#     
-#     ar_x = aspect ratio of x
-#     ar_y = aspect ratio of y (target)
-#     
-#     if ar_x and ar_y are < 10% different:
-#       x = stretch x %>% 
-#       
-#     else 
-#       x = blow up/shrink as close as possible x %>% 
-#           put black swatch behind x %>% 
-#           ensure x w border is right size
-#     
-#     put border on x %>% 
-#     put logo on x 
-#     
-#     save x
-#     
-#     print success/failure message
-#           
-#     
-
-

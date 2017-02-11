@@ -171,3 +171,44 @@ class(pic1_jpeg); typeof(pic1_jpeg)
 # (https://support.google.com/adwords/answer/6223297)
 
 
+
+
+
+
+for (y in seq_along(sizes)){
+  size <- sizes[y]
+  if (!file.exists(paste0(loc, gsub("!","",size)))){
+    dir.create(paste0(loc, gsub("!","",size)))
+  }
+  for (x in seq_along(files)){
+    img <-
+      paste0(loc, files[x]) %>%
+      image_read(paste0(loc,files[x])) %>%
+      image_scale(size) %>%
+      image_border("#E67457","5x5")
+    
+    # filename and location for output file
+    saveloc <- paste0(
+      loc, gsub("!","",size), "/rendered_", gsub("!","",size), "_", files[x]
+    )
+    # write output file
+    image_write(path=saveloc, image=img, 
+                quality=100, format="jpeg", flatten=TRUE)
+    
+    # print success message if saved; else print failure message
+    if (file.exists(saveloc)){
+      print(paste0("saved img ", x, " size ", y, " -- ", saveloc))
+    } else {
+      print(paste0("didn't save file </3 ", saveloc))
+    }
+    
+  }
+  print(paste0("done processing size ", y, " of ", length(sizes)))
+}
+
+# === === === === === === === === === === === === === === === === === === 
+# === === === === === === === === === === === === === === === === === === 
+
+as.character(
+  .5*dim_out["width"] - .5*image_info(logo)[["width"]]
+)
