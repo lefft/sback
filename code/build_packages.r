@@ -21,8 +21,8 @@ library("magick"); library("magrittr")
 sizes <- c("300x250!","728x90!","160x600!","320x50!","300x600!","970x250!")
 
 # path to specific package folder, containing the images
-# loc <- "../../packages/vintage_bball/"
-loc <- "../../packages/animals/"
+package_name <- "animals"
+loc <- paste0("../../packages/", package_name, "/")
 
 # list filenames of raw images, w/o path
 files <- dir(loc)[endsWith(dir(loc), ".jpg") | endsWith(dir(loc), ".jpeg")]
@@ -41,9 +41,12 @@ logo_bw <- image_read("../../packages/spaceback/spaceback_bw.png")
 # update after each loop iteration
 info <- data.frame(
   file=rep(files, times=length(sizes)),
-  in_size=rep(NA, times=length(file)),
+  in_size=rep(NA, times=length(files)),
   out_size=rep(sizes, each=length(files))
 )
+container <- vector(mode="list", length=length(sizes))
+names(container) <- sizes
+
 
 
 # for each size y:
@@ -51,6 +54,24 @@ for (y in seq_along(sizes)){
   
   # set 'size' to the y-th element of 'sizes'
   size <- sizes[y]
+  
+  # dimensions of output as a vector 
+  dim_out <- 
+    gsub("!","",sizes[y]) %>%
+    strsplit("x") %>%
+    (function(z) c(z[1],z[2])[[1]]) %>% 
+    as.integer() %>% 
+    (function(z) c(width=z[1], height=z[2]))
+  # aspect ratio of target image to create
+  ar_out <- as.numeric(dim_out["width"] / dim_out["height"])
+  
+  container[[y]] <- data.frame(
+    file=rep(NA, times=length(files)),
+    in_dim=rep(NA, times=length(files)),
+    in_ar=rep(NA, times=length(files)),
+    out_dim=rep(dim_out, times=length(files)),
+    out_ar=rep(ar_out, times=length(files))
+  )
   
   # create dir for output if it doesnt exist
   if (!file.exists(paste0(loc, gsub("!","",size)))){
@@ -79,15 +100,9 @@ for (y in seq_along(sizes)){
     # aspect ratio of original image
     ar_in <- as.numeric(dim_in["width"] / dim_in["height"])
     
-    # dimensions of output as a vector 
-    dim_out <- 
-      gsub("!","",sizes[y]) %>%
-      strsplit("x") %>%
-      (function(z) c(z[1],z[2])[[1]]) %>% 
-      as.integer() %>% 
-      (function(z) c(width=z[1], height=z[2]))
-    # aspect ratio of target image to create
-    ar_out <- as.numeric(dim_out["width"] / dim_out["height"])
+    container[[y]]$file[x] <- files[x]
+    container[[y]]$in_dim[x] <- paste0(dim_in["width"],"x",dim_in["height"])
+    container[[y]]$in_ar[x] <- ar_in
     
     # scale logo size -- set width to 
     #   - 1/2 output width for 160x600, 300x250, 300x600
@@ -168,9 +183,28 @@ for (y in seq_along(sizes)){
     
   }
 }
+# collect up all the image info into a log file-like object
+image_log <- data.frame(stringsAsFactors=FALSE)
+for (df in 1:6){
+  image_log <- rbind(image_log, container[[df]])
+}; rm(container)
 
+# calculate how much each input image differs from desired output 
+image_log$ar_difference <- round(image_log$in_ar / image_log$out_ar, digits=2)
 
+# save the log file for later inspection
+write.csv(image_log, row.names=FALSE,
+          file=paste0(loc, "image_log_", package_name, ".csv"))
 
+# NOTE: START HERE NEXT -- 
+#                       1. CAN PUT THIS IN LOOP AND USE LOGIC TO DECIDE WHEN
+#                          TO TRY AN IMAGE + WHEN TO IGNORE BC OUTPUT WILL 
+#                          NOT WORK BC SIZES ARE TOO DIFFERENT
+#
+#                       2. ALSO SHOULD RENAME EACH PIC W AN ID, E.G. COULD 
+#                          HAVE FILENAMES OF THE FORM E.G.:
+#                          identifier__id__filename.jpg 
+#                          THEN COULD ADD ID TO THE LOG FILE
 
 
 
