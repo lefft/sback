@@ -37,16 +37,11 @@ logo <- image_read("../../packages/spaceback/spaceback.png")
 # black + white version of the logo
 logo_bw <- image_read("../../packages/spaceback/spaceback_bw.png") 
 
-# initialize a df object for storing image i/o info (for later inspection)
-# update after each loop iteration
-info <- data.frame(
-  file=rep(files, times=length(sizes)),
-  in_size=rep(NA, times=length(files)),
-  out_size=rep(sizes, each=length(files))
-)
+logo_vec <- image_read("../../packages/spaceback/spaceback_vec.eps")
+
+# initialize object to store image i/o info to make log file after loop
 container <- vector(mode="list", length=length(sizes))
 names(container) <- sizes
-
 
 
 # for each size y:
@@ -210,3 +205,5 @@ write.csv(image_log, row.names=FALSE,
 
 # === === === === === === === === === === === === === === === === === === 
 # === === === === === === === === === === === === === === === === === === 
+
+
