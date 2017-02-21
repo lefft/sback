@@ -2,11 +2,15 @@
 
 
 
-##### animals notes 
 
-970x250(3.88) -- got 3
-320x50(6.4)  -- got 3
-728x90(8.088)  -- got 3(ish)
+### outstanding issues with package generation pipeline (of feb20)
 
-160x600(.266) -- got 2(ish)
+- [ ] logo size for different output sizes
+- [ ] border clipped when no black padding 
+- [ ] need to re-integrate log file creation inside function/loop (from previous version in `old_approach.r`)
+- [ ] generalize to different image formats
+- [ ] evaluate performance of various solutions and select best to develop
+- [ ] determine when to crop an image + when to have the theater-style padding (should prob be stated in terms of comparison between image aspect ratio and target aspect ratio)
+- [ ] build logic into function (or loop?) for cropping vs fitting
+- [ ] ...
 
