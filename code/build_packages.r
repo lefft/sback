@@ -1,4 +1,5 @@
 # boosh! aws tessste <3
+# set keyboard Cmd+W -- chrome seems to override! weird bc it doesnt for cmd+s
 
 ### build_packages.r ##########################################################
 # 
