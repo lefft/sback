@@ -1,3 +1,5 @@
+# boosh! aws tessste <3
+
 ### build_packages.r ##########################################################
 # 
 # this script iterates over images in a directory and a set of sizes,
